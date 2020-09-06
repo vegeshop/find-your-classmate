@@ -16,14 +16,10 @@ import csv
 import re
 
 class CourseCsvFileNotFoundException(Exception):
-    """
-    A custom exception for the cases that the course csv file does not exist.
-    """
     pass
 
 def check_filename_existence(func):
     """
-    A decorator that catches the non-exiting filename argument and raises a custom `BabynameFileNotFoundException`.
     파일을 읽기 전 존재 유무를 확인하는 데코레이터
     """
     def decorated(self, dirname, filebase):
@@ -119,9 +115,6 @@ class CourseRecord:
 def save(filename, records):
     """
     This function saves the parsed records in text format.
-    Args:
-        filename: The name of the output file.
-        records: The list of records.
     """
     with open(filename, "w") as f:
         f.write("[VESS 5기] 당신의 겹강을 찾아드립니다\n\n")
