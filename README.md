@@ -5,6 +5,8 @@
 
 * 출력: '겹강목록.txt'
 
+* test: ./find_your_classmate.py courses
+
 by Eunsung Lim <<unsungvegetable@gmail.com>>
 
 ```python
