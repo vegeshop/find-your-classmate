@@ -5,7 +5,7 @@
 
 * 출력: '겹강목록.txt'
 
-by Eunsung Lim <unsungvegetable@gmail.com>
+by Eunsung Lim <<unsungvegetable@gmail.com>>
 
 ```python
 #!/usr/local/bin/python3
