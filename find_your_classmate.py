@@ -44,16 +44,17 @@ class CsvParser:
                 # 이름 추출
                 name = row.pop(name_index)
                 # removes null('') elements
-                # 공란 제거
-                filtered_row_itr = filter(None, row[1:]) 
+                # 공란 제거 & 강의명 항목만 추출
+                filtered_row_itr = filter(None, row[2:-1]) 
                 # removes all white spaces(' ') & split course into name and number
                 # 공백 문자 제거 & 강의명 / 분반번호 분리
                 trimmed_elements = [elem.replace(' ', '').split('(') for elem in filtered_row_itr]
+                # 분반번호 안적은경우 디폴트 001로 설정
+                processed_itr = map(lambda elem: elem + ['001'] if len(elem) < 2 else elem, trimmed_elements)
                 # remove not numbers from course_num & adds up elements in records
                 # 분반번호에 숫자만 남긴다
                 # ("임은성", "초급프랑스어1", "003")과 같은 형식의 튜플로 모든 수강 데이터를 저장한다
-                self.name_to_course_tuples += [(name, course_name, re.sub("[^0-9]", "", course_num)) for course_name, course_num in trimmed_elements] 
-   
+                self.name_to_course_tuples += [(name, course_name, re.sub("[^0-9]", "", course_num)) for course_name, course_num in processed_itr]    
 
 def filter_kor(course_full_name):
     # removes all characters other than korean
