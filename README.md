@@ -3,9 +3,9 @@
 
 * 입력: 이름과 강의명으로 이루어진 csv 파일(구글폼 출력)
 
-* 출력: '겹강목록.txt'
+* 출력: '겹강목록.txt', '겹강목록_멤버별.txt'
 
-* 테스트: ./find_your_classmate.py courses
+* 사용법: ./find_your_classmate.py courses
 
 by Eunsung Lim <<unsungvegetable@gmail.com>>
 
@@ -56,16 +56,17 @@ class CsvParser:
                 # 이름 추출
                 name = row.pop(name_index)
                 # removes null('') elements
-                # 공란 제거
-                filtered_row_itr = filter(None, row[1:]) 
+                # 공란 제거 & 강의명 항목만 추출
+                filtered_row_itr = filter(None, row[2:-1]) 
                 # removes all white spaces(' ') & split course into name and number
                 # 공백 문자 제거 & 강의명 / 분반번호 분리
                 trimmed_elements = [elem.replace(' ', '').split('(') for elem in filtered_row_itr]
+                # 분반번호 안적은경우 디폴트 001로 설정
+                processed_itr = map(lambda elem: elem + ['001'] if len(elem) < 2 else elem, trimmed_elements)
                 # remove not numbers from course_num & adds up elements in records
                 # 분반번호에 숫자만 남긴다
                 # ("임은성", "초급프랑스어1", "003")과 같은 형식의 튜플로 모든 수강 데이터를 저장한다
-                self.name_to_course_tuples += [(name, course_name, re.sub("[^0-9]", "", course_num)) for course_name, course_num in trimmed_elements] 
-   
+                self.name_to_course_tuples += [(name, course_name, re.sub("[^0-9]", "", course_num)) for course_name, course_num in processed_itr]    
 
 def filter_kor(course_full_name):
     # removes all characters other than korean
@@ -98,8 +99,8 @@ class CourseRecord:
         """
         # 강의 풀네임 가나다 순으로 정렬
         self.member_tuples = sorted(self.member_tuples, key=lambda member: member[1])
-        return "[강의분류명] {}\n".format(self.course_name) \
-                + '\n'.join(["이름: %s, 강의명: %s, 분반: %s" % member for member in self.member_tuples]) \
+        return "[강의분류명] {}\n\t".format(self.course_name) \
+                + '\n\t'.join(["이름: %s, 강의명: %s, 분반: %s" % member for member in self.member_tuples]) \
                 + '\n'
     # 콘솔 출력용
     def print_members(self):
@@ -124,6 +125,19 @@ def save(filename, records):
             f.write(record.to_txt_record())
             f.write("\n")
 
+# 멤버별로 겹강 정보를 파일에 적는다
+def save_mem(filename, records_dict):
+    """
+    This function saves the parsed records in text format.
+    """
+    with open(filename, "w") as f:
+        f.write("[VESS 5기] 당신의 겹강을 찾아드립니다\n\n")
+        for name, records in records_dict:
+            f.write("*" * 50 + '\n')
+            f.write("![{}]의 겹강 목록!\n".format(name))
+            for record in records: f.write('\t' + record.to_txt_record() + '\n')
+            f.write("*" * 50 + '\n\n')
+
 def main():
     args = sys.argv[1:]
     if len(args) < 1:
@@ -132,6 +146,7 @@ def main():
 
     filebase = args[0]
     records = {} # dictionary of CourseRecord objects
+    records_mem = {} # dictionary of CourseRecord objects list for each member
     
     # 데이터를 읽어들이고, 적절한 형식으로 변환한다
     parser = CsvParser(os.getcwd(), filebase)
@@ -150,6 +165,19 @@ def main():
     # 가나다 순으로 현재 디렉토리의 '겹강목록.txt' 파일에 출력
     filename = os.path.join(os.getcwd(), "{}.txt".format('겹강목록'))
     save(filename, sorted(records.items()))
+
+    # 겹강 정보를 멤버별로 묶어 저장, 겹강이 아닌 항목은 제외(멤버 1명인 강의)
+    for record in filter(lambda record: len(record.member_tuples) > 1, records.values()):
+        for member in record.member_tuples:
+            try:
+                # key로 멤버명 이용(member[0])
+                records_mem[member[0]].append(record)
+            except KeyError:
+                records_mem[member[0]] = [record]
+            
+    # 멤버별로, 포함된 CourseRecord들을 '겹강목록_멤버별.txt' 파일에 출력
+    filename_mem = os.path.join(os.getcwd(), "{}.txt".format('겹강목록_멤버별'))
+    save_mem(filename_mem, sorted(records_mem.items()))
 
 if __name__ == '__main__':
     main()
